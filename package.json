@@ -1,0 +1,16 @@
+{
+  "name": "auth_demo",
+  "version": "1.0.0",
+  "description": "Demo for mithril spa auth with golang",
+  "main": "index.js",
+  "author": "Cedric Chin <cedric@elijames.org>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "mithril": "^2.0.4"
+  },
+  "devDependencies": {
+    "webpack": "^4.41.0",
+    "webpack-cli": "^3.3.9"
+  }
+}

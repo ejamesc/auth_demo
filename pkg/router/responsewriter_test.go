@@ -2,7 +2,6 @@ package router_test
 
 import (
 	"bufio"
-	"commoncog/read/pkg/router"
 	"fmt"
 	"net"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/ejamesc/auth_demo/pkg/router"
 )
 
 type closeNotifyingRecorder struct {
