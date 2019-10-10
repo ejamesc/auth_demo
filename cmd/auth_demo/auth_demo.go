@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/ejamesc/auth_demo/internal/app"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -30,7 +31,8 @@ The options are:`)
 	}
 
 	fmt.Println(*templatesPath, *staticFilePath)
-	env := app.NewEnv(*templatesPath)
+	logr := logrus.New()
+	env := app.NewEnv(logr, *templatesPath)
 	router := app.NewRouter(*staticFilePath, env)
 	http.ListenAndServe(":8085", router)
 }
