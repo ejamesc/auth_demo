@@ -1,7 +1,8 @@
 import "tachyons";
 import "../css/styles.scss";
 import m from "mithril";
+import cardComponent from "./card";
 
-var root = document.body;
-m.render(root, m(".ph4", "Hello World from Mithril"));
-console.log("hello world");
+const root = document.body;
+console.log(cardComponent);
+m.mount(root, cardComponent);
