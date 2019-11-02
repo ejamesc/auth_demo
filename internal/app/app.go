@@ -4,37 +4,10 @@ import (
 	"net/http"
 
 	"github.com/ejamesc/auth_demo/pkg/router"
-	"github.com/sirupsen/logrus"
 	"goji.io/pat"
-
-	"github.com/unrolled/render"
 )
 
-type Env struct {
-	rndr    *render.Render
-	spaRndr *render.Render
-	gp      *globalPresenter
-	log     *logrus.Logger
-}
-
-func NewEnv(logr *logrus.Logger, templatesPath string) *Env {
-	renderOpts := render.Options{
-		Directory:     templatesPath,
-		Extensions:    []string{".html"},
-		Layout:        "base",
-		IsDevelopment: true,
-	}
-	e := &Env{
-		rndr: render.New(renderOpts),
-		log:  logr,
-		gp:   getGlobalPresenter(),
-	}
-
-	renderOpts.Layout = ""
-	e.spaRndr = render.New(renderOpts)
-	return e
-}
-
+// NewRouter creates a new router
 func NewRouter(staticFilePath string, env *Env) *router.Router {
 	fakeErrHandler := func(w http.ResponseWriter, req *http.Request, err error) {
 		env.log.Error(err)
@@ -46,6 +19,8 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	router.Use(logHandler(env))
 
 	router.HandleE(pat.Get("/"), serveExternalHome(env))
+	router.HandleE(pat.Get("/login"), serveLogin(env))
+	router.HandleE(pat.Get("/signup"), serveSignup(env))
 	router.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(staticFilePath)))
 
 	return router
