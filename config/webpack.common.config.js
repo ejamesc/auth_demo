@@ -26,6 +26,11 @@ module.exports = {
     new HtmlPlugin({
       template: "./templates/spa.html",
       filename: "../templates/spa.html"
+    }),
+    new HtmlPlugin({
+      inject: false,
+      template: "./templates/base.html",
+      filename: "../templates/base.html"
     })
   ],
   entry: "./src/js/index.js",

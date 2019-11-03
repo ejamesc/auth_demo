@@ -16,7 +16,7 @@ module.exports = Merge(CommonConfig, {
     new CopyPlugin([{
       from: './templates/*.html', 
       to: '../',
-      ignore: 'spa.html'
+      ignore: ['spa.html', 'base.html']
     }])
   ],
   optimization: {
