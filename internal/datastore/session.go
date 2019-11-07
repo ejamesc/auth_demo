@@ -19,6 +19,10 @@ func (ss *SessionStore) GetUserByEmail(email string) (*models.User, error) {
 	return ss.UserStore.GetByEmail(email)
 }
 
+func (ss *SessionStore) GetUserByUsername(username string) (*models.User, error) {
+	return ss.UserStore.GetByUsername(username)
+}
+
 func (ss *SessionStore) CreateUser(user *models.User) (bool, error) {
 	return ss.UserStore.Create(user)
 }

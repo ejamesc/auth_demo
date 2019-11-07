@@ -64,6 +64,38 @@ func (u *UserStore) GetByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
+func (u *UserStore) GetByUsername(username string) (*models.User, error) {
+	var user models.User
+	err := u.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(UserBucket)
+		bu := tx.Bucket(userUsernameBucket)
+		if b == nil {
+			return fmt.Errorf("no %s bucket exists", string(UserBucket))
+		}
+		if bu == nil {
+			return fmt.Errorf("no %s bucket exists", string(userUsernameBucket))
+		}
+
+		id := bu.Get([]byte(username))
+		if id == nil {
+			return aderrors.ErrNoRecords
+		}
+
+		uJSON := b.Get(id)
+		if uJSON == nil {
+			return aderrors.ErrNoRecords
+		}
+		return json.Unmarshal(uJSON, &user)
+	})
+	if err != nil {
+		if err == aderrors.ErrNoRecords {
+			return nil, err
+		}
+		return nil, fmt.Errorf("error retrieving user id with username %s: %w", username, err)
+	}
+	return &user, nil
+}
+
 // Creates the user.
 func (u *UserStore) Create(usr *models.User) (bool, error) {
 	oldUser, err := u.Get(usr.ID)

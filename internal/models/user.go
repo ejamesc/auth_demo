@@ -6,12 +6,13 @@ import (
 	"database/sql/driver"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
 
 	ulid "github.com/oklog/ulid/v2"
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -45,7 +46,7 @@ type UserMetadata struct {
 func (um *UserMetadata) Value() (driver.Value, error) {
 	j, err := json.Marshal(um)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshalling UserMetadata for driver.Value")
+		return nil, fmt.Errorf("error marshalling UserMetadata for driver.Value: %w", err)
 
 	}
 	return j, nil
@@ -60,7 +61,7 @@ func (um *UserMetadata) Scan(src interface{}) error {
 
 	err := json.Unmarshal(source, um)
 	if err != nil {
-		return errors.Wrap(err, "error while unmarshalling from JSON in Scan")
+		return fmt.Errorf("error while unmarshalling from JSON in Scan: %w", err)
 	}
 	return nil
 }
@@ -73,6 +74,18 @@ func (u *User) GravatarHash() string {
 	em := strings.TrimSpace(strings.ToLower(u.Email))
 	res := md5.Sum([]byte(em))
 	return hex.EncodeToString(res[:])
+}
+
+func (u *User) SetPassword(pass string) error {
+	if pass == "" {
+		return fmt.Errorf("empty password given as input")
+	}
+	ps, err := bcrypt.GenerateFromPassword([]byte(pass), PasswordWorkfactor)
+	if err != nil {
+		return fmt.Errorf("error bcrypting password: %w", err)
+	}
+	u.Password = string(ps)
+	return nil
 }
 
 func (u *User) CheckPassword(pass string) bool {

@@ -1,1 +1,3 @@
 node_modules/
+cmd/auth_demo/auth_demo
+auth_demo.db

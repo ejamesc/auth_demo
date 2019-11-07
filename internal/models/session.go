@@ -8,6 +8,7 @@ type SessionService interface {
 	CreateSession(userID string) (*Session, error)
 	DeleteSession(id string) (bool, error)
 	GetUserByEmail(email string) (*User, error)
+	GetUserByUsername(username string) (*User, error)
 	CreateUser(user *User) (bool, error)
 }
 

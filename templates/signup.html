@@ -1,20 +1,31 @@
-<article class="pa4 black-80">
-  <form action="sign-up_submit" method="get" accept-charset="utf-8">
+<main class="pa4 black-80 helvetica">
+  <form class="measure center" action="/signup" method="post">
     <fieldset id="sign_up" class="ba b--transparent ph0 mh0">
-      <legend class="f4 ph0 mh0 fw6">Sign Up</legend>
+      <legend class="f4 ph0 mt0 mb3 fw6">Sign Up</legend>
+      {{ if ne (len .Flashes) 0 }}
+        {{ range .Flashes }}
+        <div class='db f5 pl2 pv3 mb2 bg-washed-red'>
+          {{ . }}
+        </div>
+        {{ end }}
+      {{ end }}
       <div class="mt3">
-        <label class="db fw4 lh-copy f6" for="email-address">Email address</label>
-        <input class="pa2 input-reset ba bg-transparent w-100 measure" type="email" name="email-address"  id="email-address">
+        <label class="db fw6 lh-copy f6" for="email">Email address</label>
+        <input class="pa2 input-reset ba bg-transparent w-100 measure" placeholder='sam@youremail.com' type="email" name="email"  id="email">
+      </div>
+      <div class='mt3'>
+        <label class="db fw6 lh-copy f6" for="username">Username</label>
+        <input class="pa2 input-reset ba bg-transparent w-100 measure" placeholder='fancy_username' type="text" name="username" id="username">
+
       </div>
       <div class="mt3">
-        <label class="db fw4 lh-copy f6" for="password">Password</label>
-        <input class="b pa2 input-reset ba bg-transparent" type="password" name="password"  id="password">
+        <label class="db fw6 lh-copy f6" for="password">Password</label>
+        <input class="b pa2 input-reset ba bg-transparent w-100 measure" type="password" name="password"  id="password">
       </div>
     </fieldset>
-    <div class="mt3"><input class="b ph3 pv2 input-reset purple ba b--purple bg-transparent grow pointer f6" type="submit" value="Sign Up"></div>
+    <div class="mt3"><input class="b ph3 pv2 input-reset purple ba b--purple bg-transparent glow pointer f6" type="submit" value="Sign Up"></div>
     <div class="lh-copy mt3">
       <a href="/login" class="f6 link dim black db">Log in</a>
     </div>
   </form>
-</article>
-
+</main>

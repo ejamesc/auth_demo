@@ -1,14 +1,35 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
+
+	"github.com/boltdb/bolt"
+	"github.com/ejamesc/auth_demo/internal/datastore"
 
 	"github.com/ejamesc/auth_demo/pkg/router"
 	"goji.io/pat"
 )
 
+var pdb *datastore.BDB
+
+func SetDB(db *bolt.DB) error {
+	if db == nil {
+		return fmt.Errorf("boltdb is nil")
+	}
+	pdb = &datastore.BDB{DB: db}
+	err := pdb.CreateAllBuckets()
+	if err != nil {
+		return fmt.Errorf("unable to create all buckets: %w", err)
+	}
+	return nil
+}
+
 // NewRouter creates a new router
 func NewRouter(staticFilePath string, env *Env) *router.Router {
+	ustore := &datastore.UserStore{BDB: pdb}
+	authStore := &datastore.SessionStore{BDB: pdb, UserStore: ustore}
 	fakeErrHandler := func(w http.ResponseWriter, req *http.Request, err error) {
 		env.log.Error(err)
 	}
@@ -21,6 +42,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	router.HandleE(pat.Get("/"), serveExternalHome(env))
 	router.HandleE(pat.Get("/login"), serveLogin(env))
 	router.HandleE(pat.Get("/signup"), serveSignup(env))
+	router.HandleE(pat.Post("/signup"), servePostSignup(env, authStore))
 	router.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(staticFilePath)))
 
 	return router
@@ -55,4 +77,36 @@ type localPresenter struct {
 	LocalDescription string
 	Flashes          []interface{}
 	*globalPresenter
+}
+
+func (lp localPresenter) Description() string {
+	if lp.LocalDescription != "" {
+		return lp.LocalDescription
+	} else {
+		return lp.globalPresenter.DefaultDescription
+	}
+}
+
+func (lp localPresenter) URL() string {
+	pageURL := lp.PageURL
+	if len(pageURL) > 0 && pageURL[0] == '/' {
+		pageURL = pageURL[1:]
+	}
+	u, err := url.Parse(fmt.Sprintf("%s/%s", lp.SiteURL, pageURL))
+	if err != nil {
+		return lp.SiteURL
+	}
+	return u.String()
+}
+
+func (lp localPresenter) Title() string {
+	if lp.PageTitle == "" {
+		return lp.SiteName
+	} else {
+		return fmt.Sprintf("%s · %s", lp.PageTitle, lp.SiteName)
+	}
+}
+
+func printStruct(in interface{}) string {
+	return fmt.Sprintf("%+v", in)
 }

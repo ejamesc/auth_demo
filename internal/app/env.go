@@ -65,3 +65,17 @@ func (e *Env) getUser(r *http.Request) *models.User {
 	}
 	return user
 }
+
+func (e *Env) saveFlash(w http.ResponseWriter, req *http.Request, msg string) error {
+	session, err := e.store.Get(req, sessionNameConst)
+	if err != nil {
+		return err
+	}
+	session.AddFlash(msg)
+	err = session.Save(req, w)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
