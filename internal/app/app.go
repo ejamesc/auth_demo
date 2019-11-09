@@ -29,7 +29,7 @@ func SetDB(db *bolt.DB) error {
 // NewRouter creates a new router
 func NewRouter(staticFilePath string, env *Env) *router.Router {
 	ustore := &datastore.UserStore{BDB: pdb}
-	authStore := &datastore.SessionStore{BDB: pdb, UserStore: ustore}
+	sessionStore := &datastore.SessionStore{BDB: pdb, UserStore: ustore}
 	fakeErrHandler := func(w http.ResponseWriter, req *http.Request, err error) {
 		env.log.Error(err)
 	}
@@ -38,17 +38,29 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 
 	router.Use(notFoundHandler(env))
 	router.Use(logHandler(env))
+	router.Use(userMiddleware(env, sessionStore))
+
+	authM := authMiddleware(env)
 
 	router.HandleE(pat.Get("/"), serveExternalHome(env))
+	router.HandleE(pat.Get("/c"), authM(serveSPA(env)))
 	router.HandleE(pat.Get("/login"), serveLogin(env))
+	router.HandleE(pat.Post("/login"), servePostLogin(env, sessionStore))
 	router.HandleE(pat.Get("/signup"), serveSignup(env))
-	router.HandleE(pat.Post("/signup"), servePostSignup(env, authStore))
+	router.HandleE(pat.Post("/signup"), servePostSignup(env, sessionStore))
 	router.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(staticFilePath)))
 
 	return router
 }
 
 func serveExternalHome(env *Env) router.HandlerError {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		env.rndr.Text(w, http.StatusOK, "home page")
+		return nil
+	}
+}
+
+func serveSPA(env *Env) router.HandlerError {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		env.spaRndr.HTML(w, http.StatusOK, "spa", "hello world")
 		return nil

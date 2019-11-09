@@ -1,11 +1,13 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/ejamesc/auth_demo/internal/models"
 	"github.com/ejamesc/auth_demo/pkg/router"
 
 	"github.com/sirupsen/logrus"
@@ -61,6 +63,64 @@ func notFoundHandler(env *Env) func(http.Handler) http.Handler {
 			}
 		}
 		return http.HandlerFunc(fn)
+	}
+}
+
+// Attaches the user object to the context, if logged in
+func userMiddleware(env *Env, adb models.SessionService) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			session, err := env.store.Get(r, sessionNameConst)
+			if err != nil {
+				env.log.WithField("error", err).Error("error retrieving session from store")
+				next.ServeHTTP(w, r)
+				return
+			}
+			sessionKey, ok := session.Values[sessionKeyConst]
+			if !ok { // not logged in
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			sID := sessionKey.(string)
+			u, err := adb.GetUserBySessionID(sID)
+			if err != nil {
+				env.log.WithFields(logrus.Fields{
+					"error":      err,
+					"session_id": sID,
+				}).Error("error getting user with session ID")
+				delete(session.Values, sessionKey)
+				session.Save(r, w)
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, userKeyConst, u)
+			r = r.WithContext(ctx)
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
+// Auth middleware is the middleware wrapper to protect authentication endpoints.
+// This has to be placed after the userMiddleware
+func authMiddleware(env *Env) func(next router.HandlerError) router.HandlerError {
+	return func(next router.HandlerError) router.HandlerError {
+		fn := func(w http.ResponseWriter, r *http.Request) error {
+			user := env.getUser(r)
+
+			if user == nil {
+				env.saveFlash(w, r, "You need to login to view that page!")
+				http.Redirect(w, r, "/login", 302)
+				return nil
+			} else {
+				return next(w, r)
+			}
+		}
+
+		return fn
 	}
 }
 

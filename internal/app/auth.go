@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,7 +16,7 @@ import (
 func serveLogin(env *Env) router.HandlerError {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		if u := env.getUser(r); u != nil {
-			http.Redirect(w, r, "/w", http.StatusFound)
+			http.Redirect(w, r, "/c", http.StatusFound)
 			return nil
 		}
 
@@ -31,10 +32,60 @@ func serveLogin(env *Env) router.HandlerError {
 	}
 }
 
+func servePostLogin(env *Env, sdb models.SessionService) router.HandlerError {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		email, pass := r.FormValue("email"), r.FormValue("password")
+		if !govalidator.IsEmail(email) {
+			env.saveFlash(w, r, "That's not a valid email.")
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return aderrors.NewError(
+				400, "Invalid email provided", nil).WithFields(
+				logrus.Fields{"email": email})
+		}
+
+		if strings.TrimSpace(pass) == "" {
+			env.saveFlash(w, r, "You need to provide a password.")
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return aderrors.NewError(400, "No password provided", nil)
+		}
+
+		u, err := sdb.GetUserByEmail(email)
+		if err != nil {
+			if errors.Is(err, aderrors.ErrNoRecords) {
+				env.saveFlash(w, r, "Your email or password were incorrect.")
+				u = &models.User{}
+				u.CheckPassword(pass)
+				http.Redirect(w, r, "/login", http.StatusFound)
+				return aderrors.NewError(400, "No user found", nil).WithFields(
+					logrus.Fields{"email": email})
+			}
+			return aderrors.New500Error("error with retrieving user in login", err)
+		}
+
+		passOK := u.CheckPassword(pass)
+		if !passOK {
+			env.saveFlash(w, r, "Your email or password were incorrect")
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return aderrors.NewError(400, "No user found", nil).WithFields(
+				logrus.Fields{"email": email})
+		}
+
+		sess, err := sdb.CreateSession(u.ID)
+		if err != nil {
+			return aderrors.New500Error("error creating session for user", err).WithFields(logrus.Fields{"session": printStruct(sess)})
+		}
+		cookieStore, _ := env.store.Get(r, sessionNameConst)
+		cookieStore.Values[sessionKeyConst] = sess.ID
+		cookieStore.Save(r, w)
+		http.Redirect(w, r, "/c", http.StatusFound)
+		return nil
+	}
+}
+
 func serveSignup(env *Env) router.HandlerError {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		if u := env.getUser(r); u != nil {
-			http.Redirect(w, r, "/w", http.StatusFound)
+			http.Redirect(w, r, "/c", http.StatusFound)
 			return nil
 		}
 		fs := env.getFlash(w, r)
@@ -127,7 +178,7 @@ func servePostSignup(env *Env, sdb models.SessionService) router.HandlerError {
 		cookieStore, _ := env.store.Get(r, sessionNameConst)
 		cookieStore.Values[sessionKeyConst] = sess.ID
 		cookieStore.Save(r, w)
-		http.Redirect(w, r, "/w", http.StatusFound)
+		http.Redirect(w, r, "/c", http.StatusFound)
 		return nil
 	}
 }
