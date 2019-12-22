@@ -13,7 +13,8 @@ var (
 	SessionBucket      = []byte("session_bucket")
 	userEmailBucket    = []byte("user_email_bucket")
 	userUsernameBucket = []byte("user_username_bucket")
-	bucketsList        = [][]byte{UserBucket, SessionBucket, userEmailBucket, userUsernameBucket}
+	TodoBucket         = []byte("todo_bucket")
+	bucketsList        = [][]byte{UserBucket, SessionBucket, userEmailBucket, userUsernameBucket, TodoBucket}
 )
 
 type BDB struct {

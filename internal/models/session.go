@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	uuid "github.com/satori/go.uuid"
+)
 
 type SessionService interface {
 	GetSession(id string) (*Session, error)
@@ -15,6 +19,7 @@ type SessionService interface {
 // Session contains the session data. It associates a user with a session ID.
 type Session struct {
 	ID           string    `json:"id"`
+	Token        string    `json:"token"`
 	UserID       string    `json:"user_id" db:"user_id"`
 	LoginTime    time.Time `json:"login_time" db:"login_time"`
 	LastSeenTime time.Time `json:"last_seen_time" db:"last_seen_time"`
@@ -22,4 +27,8 @@ type Session struct {
 
 func (s *Session) GenerateID() {
 	s.ID = generateULID()
+}
+
+func (s *Session) GenerateToken() {
+	s.Token = uuid.NewV4().String()
 }

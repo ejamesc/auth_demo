@@ -3,12 +3,15 @@ package aderrors
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
 var ErrNoRecords = errors.New("No records found")
+var ErrNoID = errors.New("No ID supplied")
+var ErrAlreadyExists = errors.New("Entity already exists")
 
 // StatusError represents an error with an associated HTTP status code.
 type StatusError struct {
@@ -62,14 +65,25 @@ func NewError(code int, msg string, err error) StatusError {
 }
 
 func New500Error(msg string, err error) StatusError {
-	return NewError(500, msg, err)
+	return NewError(http.StatusInternalServerError, msg, err)
 }
 
 func New404Error(msg string, err error) StatusError {
-	return NewError(404, msg, err)
+	return NewError(http.StatusNotFound, msg, err)
 }
 
 func NewAPIError(code int, publicMsg string, err error) APIStatusError {
-	se := NewError(code, publicMsg, err)
+	se := StatusError{
+		Code: code,
+		Err:  err,
+	}
 	return APIStatusError{PublicMessage: publicMsg, StatusError: se}
+}
+
+func New500APIError(err error) APIStatusError {
+	se := StatusError{Code: http.StatusInternalServerError, Err: err}
+	return APIStatusError{
+		PublicMessage: "Internal server error",
+		StatusError:   se,
+	}
 }
