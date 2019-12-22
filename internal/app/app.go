@@ -50,7 +50,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	router.HandleE(pat.Post("/signup"), servePostSignup(env, sessionStore))
 	router.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(staticFilePath)))
 
-	router.HandleE(pat.Post("/api/login"), servePostLogin(env, sessionStore))
+	router.HandleE(pat.Post("/api/login"), serveAPIPostLogin(env, sessionStore))
 
 	return router
 }
