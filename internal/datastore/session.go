@@ -73,6 +73,7 @@ func (ss *SessionStore) CreateSession(userID string) (*models.Session, error) {
 		LastSeenTime: timeNow(),
 	}
 	sess.GenerateID()
+	sess.GenerateToken()
 	err = ss.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(SessionBucket)
 		if b == nil {

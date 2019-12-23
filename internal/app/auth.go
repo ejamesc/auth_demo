@@ -246,8 +246,12 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 			env.rndr.JSON(w, apiErr.Code, apiErr)
 			return apiErr
 		}
-		//TODO: you need to create the struct for this
-		env.rndr.JSON(w, http.StatusOK, nil)
+		// TODO: So, question, how do you identify which session is accessible by token and accessible by ID?
+		env.rndr.JSON(w, http.StatusOK, tokenStruct{AccessToken: sess.Token})
 		return nil
 	}
+}
+
+type tokenStruct struct {
+	AccessToken string `json:"access_token"`
 }
