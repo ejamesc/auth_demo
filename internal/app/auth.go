@@ -73,7 +73,7 @@ func servePostLogin(env *Env, sdb models.SessionService) router.HandlerError {
 				logrus.Fields{"email": email})
 		}
 
-		sess, err := sdb.CreateSession(u.ID)
+		sess, err := sdb.CreateSession(u.ID, false)
 		if err != nil {
 			return aderrors.New500Error("error creating session for user", err).WithFields(logrus.Fields{"session": printStruct(sess)})
 		}
@@ -174,7 +174,7 @@ func servePostSignup(env *Env, sdb models.SessionService) router.HandlerError {
 			return aderrors.New500Error("error creating user during signup", err).WithFields(logrus.Fields{"user": printStruct(u)})
 		}
 
-		sess, err := sdb.CreateSession(u.ID)
+		sess, err := sdb.CreateSession(u.ID, false)
 		if err != nil {
 			return aderrors.New500Error("error creating session for user", err).WithFields(logrus.Fields{"session": printStruct(sess)})
 		}
@@ -240,7 +240,7 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 			return apiErr
 		}
 
-		sess, err := sdb.CreateSession(u.ID)
+		sess, err := sdb.CreateSession(u.ID, true)
 		if err != nil {
 			apiErr := aderrors.New500APIError(fmt.Errorf("Error creating session for user: %w", err)).WithFields(logrus.Fields{"session": printStruct(sess)})
 			env.rndr.JSON(w, apiErr.Code, apiErr)

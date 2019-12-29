@@ -9,7 +9,7 @@ import (
 type SessionService interface {
 	GetSession(id string) (*Session, error)
 	GetUserBySessionID(sessionID string) (*User, error)
-	CreateSession(userID string) (*Session, error)
+	CreateSession(userID string, isMobile bool) (*Session, error)
 	DeleteSession(id string) (bool, error)
 	GetUserByEmail(email string) (*User, error)
 	GetUserByUsername(username string) (*User, error)
@@ -21,6 +21,7 @@ type Session struct {
 	ID           string    `json:"id"`
 	Token        string    `json:"token"`
 	UserID       string    `json:"user_id" db:"user_id"`
+	IsMobile     bool      `json:"is_mobile" db:"is_mobile"`
 	LoginTime    time.Time `json:"login_time" db:"login_time"`
 	LastSeenTime time.Time `json:"last_seen_time" db:"last_seen_time"`
 }

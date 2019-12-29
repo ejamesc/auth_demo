@@ -61,7 +61,7 @@ func (ss *SessionStore) GetUserBySessionID(sessionID string) (*models.User, erro
 	return usr, nil
 }
 
-func (ss *SessionStore) CreateSession(userID string) (*models.Session, error) {
+func (ss *SessionStore) CreateSession(userID string, isMobile bool) (*models.Session, error) {
 	usr, err := ss.UserStore.Get(userID)
 	if err != nil || usr == nil {
 		return nil, fmt.Errorf("error retrieving user with id %s: %w", userID, err)
@@ -69,6 +69,7 @@ func (ss *SessionStore) CreateSession(userID string) (*models.Session, error) {
 
 	sess := models.Session{
 		UserID:       userID,
+		IsMobile:     isMobile,
 		LoginTime:    timeNow(),
 		LastSeenTime: timeNow(),
 	}
