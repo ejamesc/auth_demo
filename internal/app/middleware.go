@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ejamesc/auth_demo/internal/aderrors"
 	"github.com/ejamesc/auth_demo/internal/models"
 	"github.com/ejamesc/auth_demo/pkg/router"
 
@@ -121,6 +122,44 @@ func authMiddleware(env *Env) func(next router.HandlerError) router.HandlerError
 		}
 
 		return fn
+	}
+}
+
+func errorHandler(env *Env) router.ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, err error) {
+		lp := &localPresenter{PageTitle: "404 Page Not Found", PageURL: r.URL.String(), globalPresenter: env.gp}
+
+		switch e := err.(type) {
+		case aderrors.StatusError:
+			if e.Status() == 404 {
+				env.rndr.HTML(w, e.Status(), "404", lp)
+			} else if e.Status() == 500 {
+				lp.PageTitle = "500 Internal Server Error"
+				env.rndr.HTML(w, e.Status(), "500", lp)
+			}
+			env.log.WithFields(e.Fields()).Error(e)
+		default:
+			// Any error types we don't specifically look out for default to serving a terrible HTTP 500
+			//
+			env.log.Error(e)
+			env.rndr.HTML(w, http.StatusInternalServerError, "500", lp)
+		}
+	}
+}
+
+// TODO: Change this to use jsonapi.org style errors
+func apiErrorHandler(env *Env) router.ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, err error) {
+		switch e := err.(type) {
+
+		case aderrors.APIStatusError:
+			env.log.WithFields(e.Fields()).Error(e)
+			env.rndr.JSON(w, e.Status(), e.PublicMessage)
+
+		default:
+			env.log.Error(e)
+			env.rndr.JSON(w, http.StatusInternalServerError, e)
+		}
 	}
 }
 

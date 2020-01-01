@@ -33,10 +33,11 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	fakeErrHandler := func(w http.ResponseWriter, req *http.Request, err error) {
 		env.log.Error(err)
 	}
+	errHandler := errorHandler(env)
+	apiErrHandler := apiErrorHandler(env)
 
-	rter := router.New(fakeErrHandler, fakeErrHandler)
-	// TODO: you should have API 404 handling here
-	apiRtr := router.NewSubMux(fakeErrHandler, fakeErrHandler)
+	rter := router.New(errHandler, fakeErrHandler)
+	apiRtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
 
 	rter.Use(notFoundHandler(env))
 	rter.Use(logHandler(env))
