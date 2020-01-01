@@ -34,25 +34,28 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 		env.log.Error(err)
 	}
 
-	router := router.New(fakeErrHandler, fakeErrHandler)
+	rter := router.New(fakeErrHandler, fakeErrHandler)
+	// TODO: you should have API 404 handling here
+	apiRtr := router.NewSubMux(fakeErrHandler, fakeErrHandler)
 
-	router.Use(notFoundHandler(env))
-	router.Use(logHandler(env))
-	router.Use(userMiddleware(env, sessionStore))
+	rter.Use(notFoundHandler(env))
+	rter.Use(logHandler(env))
+	rter.Use(userMiddleware(env, sessionStore))
 
 	authM := authMiddleware(env)
 
-	router.HandleE(pat.Get("/"), serveExternalHome(env))
-	router.HandleE(pat.Get("/c"), authM(serveSPA(env)))
-	router.HandleE(pat.Get("/login"), serveLogin(env))
-	router.HandleE(pat.Post("/login"), servePostLogin(env, sessionStore))
-	router.HandleE(pat.Get("/signup"), serveSignup(env))
-	router.HandleE(pat.Post("/signup"), servePostSignup(env, sessionStore))
-	router.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(staticFilePath)))
+	rter.HandleE(pat.Get("/"), serveExternalHome(env))
+	rter.HandleE(pat.Get("/c"), authM(serveSPA(env)))
+	rter.HandleE(pat.Get("/login"), serveLogin(env))
+	rter.HandleE(pat.Post("/login"), servePostLogin(env, sessionStore))
+	rter.HandleE(pat.Get("/signup"), serveSignup(env))
+	rter.HandleE(pat.Post("/signup"), servePostSignup(env, sessionStore))
+	rter.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(staticFilePath)))
 
-	router.HandleE(pat.Post("/api/login"), serveAPIPostLogin(env, sessionStore))
+	rter.Handle(pat.Get("/api/*"), apiRtr)
+	apiRtr.HandleE(pat.Post("/login"), serveAPIPostLogin(env, sessionStore))
 
-	return router
+	return rter
 }
 
 func serveExternalHome(env *Env) router.HandlerError {
