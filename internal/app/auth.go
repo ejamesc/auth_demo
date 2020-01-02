@@ -197,7 +197,6 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 		err := json.NewDecoder(r.Body).Decode(&alogin)
 		if err != nil {
 			apiErr := aderrors.New500APIError(fmt.Errorf("JSON decoder error: %w", err))
-			env.rndr.JSON(w, apiErr.Code, apiErr)
 			return apiErr
 		}
 
@@ -205,13 +204,11 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 			apiErr := aderrors.NewAPIError(
 				http.StatusBadRequest, "Invalid email provided", fmt.Errorf("Invalid email")).WithFields(
 				logrus.Fields{"email": alogin.Email})
-			env.rndr.JSON(w, apiErr.Code, apiErr)
 			return apiErr
 		}
 
 		if strings.TrimSpace(alogin.Password) == "" {
 			apiErr := aderrors.NewAPIError(http.StatusBadRequest, "No password provided", fmt.Errorf("No password provided"))
-			env.rndr.JSON(w, apiErr.Code, apiErr)
 			return apiErr
 		}
 
@@ -223,11 +220,9 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 				u.CheckPassword(alogin.Password)
 				apiErr := aderrors.NewAPIError(http.StatusBadRequest, "No user found", fmt.Errorf("No user found")).WithFields(
 					logrus.Fields{"email": alogin.Email})
-				env.rndr.JSON(w, apiErr.Code, apiErr)
 				return apiErr
 			} else {
 				apiErr := aderrors.New500APIError(fmt.Errorf("Error retrieving user: %w", err))
-				env.rndr.JSON(w, apiErr.Code, apiErr)
 				return apiErr
 			}
 		}
@@ -236,17 +231,15 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 		if !passOK {
 			apiErr := aderrors.NewAPIError(http.StatusBadRequest, "Your email or password was incorrect", fmt.Errorf("Password check failed")).WithFields(
 				logrus.Fields{"email": alogin.Email})
-			env.rndr.JSON(w, apiErr.Code, apiErr)
 			return apiErr
 		}
 
 		sess, err := sdb.CreateSession(u.ID, true)
 		if err != nil {
 			apiErr := aderrors.New500APIError(fmt.Errorf("Error creating session for user: %w", err)).WithFields(logrus.Fields{"session": printStruct(sess)})
-			env.rndr.JSON(w, apiErr.Code, apiErr)
 			return apiErr
 		}
-		// TODO: So, question, how do you identify which session is accessible by token and accessible by ID?
+		// TODO: Change this to jsonapi format
 		env.rndr.JSON(w, http.StatusOK, tokenStruct{AccessToken: sess.Token})
 		return nil
 	}

@@ -51,6 +51,11 @@ type APIStatusError struct {
 	StatusError
 }
 
+func (ase APIStatusError) WithFields(f logrus.Fields) APIStatusError {
+	ase.fields = f
+	return ase
+}
+
 // NewError creates a new StatusError.
 // msg may contain %w, otherwise, it will be appended for you
 func NewError(code int, msg string, err error) StatusError {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ejamesc/auth_demo/internal/models"
 
+	"github.com/google/jsonapi"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"github.com/unrolled/render"
@@ -78,4 +79,16 @@ func (e *Env) saveFlash(w http.ResponseWriter, req *http.Request, msg string) er
 	}
 
 	return nil
+}
+
+func (e *Env) jsonAPI(w http.ResponseWriter, statusCode int, obj interface{}) error {
+	w.Header().Set("Content-Type", jsonapi.MediaType)
+	w.WriteHeader(statusCode)
+	return jsonapi.MarshalPayload(w, obj)
+}
+
+func (e *Env) jsonAPIErr(w http.ResponseWriter, statusCode int, errorObjs []*jsonapi.ErrorObject) error {
+	w.Header().Set("Content-Type", jsonapi.MediaType)
+	w.WriteHeader(statusCode)
+	return jsonapi.MarshalErrors(w, errorObjs)
 }

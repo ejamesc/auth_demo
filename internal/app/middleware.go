@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/ejamesc/auth_demo/internal/models"
 	"github.com/ejamesc/auth_demo/pkg/router"
 
+	"github.com/google/jsonapi"
 	"github.com/sirupsen/logrus"
 	"goji.io/middleware"
 )
@@ -125,16 +127,48 @@ func authMiddleware(env *Env) func(next router.HandlerError) router.HandlerError
 	}
 }
 
+// NOTE: 404s are not handled by the errorhandler below, because goji
+// does 404s before the middleware stack. So we have to have an explicit
+// middleware. See: https://github.com/goji/goji/issues/20
+func handle404Middleware(env *Env) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			if middleware.Handler(r.Context()) == nil {
+				lp := &localPresenter{PageTitle: "404 Page Not Found", PageURL: r.URL.String(), globalPresenter: env.gp}
+				env.rndr.HTML(w, http.StatusNotFound, "404", lp)
+			} else {
+				next.ServeHTTP(w, r)
+			}
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
+func handle404APIMiddleware(env *Env) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			if middleware.Handler(r.Context()) == nil {
+				errObj := &jsonapi.ErrorObject{
+					Status: "404",
+					Title:  "No such endpoint",
+				}
+				env.jsonAPIErr(w, http.StatusNotFound, []*jsonapi.ErrorObject{errObj})
+			} else {
+				next.ServeHTTP(w, r)
+			}
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
 func errorHandler(env *Env) router.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
-		lp := &localPresenter{PageTitle: "404 Page Not Found", PageURL: r.URL.String(), globalPresenter: env.gp}
+		lp := &localPresenter{PageTitle: "500 Internal Server Error", PageURL: r.URL.String(), globalPresenter: env.gp}
 
 		switch e := err.(type) {
 		case aderrors.StatusError:
-			if e.Status() == 404 {
-				env.rndr.HTML(w, e.Status(), "404", lp)
-			} else if e.Status() == 500 {
-				lp.PageTitle = "500 Internal Server Error"
+			// No router 404 errors will be processed here, because Goji requires 404s to be captured at the middleware layer.
+			if e.Status() == 500 {
 				env.rndr.HTML(w, e.Status(), "500", lp)
 			}
 			env.log.WithFields(e.Fields()).Error(e)
@@ -147,15 +181,16 @@ func errorHandler(env *Env) router.ErrorHandler {
 	}
 }
 
-// TODO: Change this to use jsonapi.org style errors
 func apiErrorHandler(env *Env) router.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		switch e := err.(type) {
-
 		case aderrors.APIStatusError:
 			env.log.WithFields(e.Fields()).Error(e)
-			env.rndr.JSON(w, e.Status(), e.PublicMessage)
-
+			errObj := &jsonapi.ErrorObject{
+				Status: strconv.Itoa(e.Status()),
+				Title:  e.PublicMessage,
+			}
+			env.jsonAPIErr(w, e.Status(), []*jsonapi.ErrorObject{errObj})
 		default:
 			env.log.Error(e)
 			env.rndr.JSON(w, http.StatusInternalServerError, e)

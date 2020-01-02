@@ -37,8 +37,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	apiErrHandler := apiErrorHandler(env)
 
 	rter := router.New(errHandler, fakeErrHandler)
-	apiRtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
-
+	rter.Use(handle404Middleware(env))
 	rter.Use(notFoundHandler(env))
 	rter.Use(logHandler(env))
 	rter.Use(userMiddleware(env, sessionStore))
@@ -53,7 +52,10 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	rter.HandleE(pat.Post("/signup"), servePostSignup(env, sessionStore))
 	rter.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(staticFilePath)))
 
-	rter.Handle(pat.Get("/api/*"), apiRtr)
+	apiRtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
+	apiRtr.Use(handle404APIMiddleware(env))
+
+	rter.Handle(pat.New("/api/*"), apiRtr)
 	apiRtr.HandleE(pat.Post("/login"), serveAPIPostLogin(env, sessionStore))
 
 	return rter

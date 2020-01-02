@@ -51,5 +51,7 @@ The options are:`)
 	fmt.Println(*templatesPath, *staticFilePath)
 	env := app.NewEnv(logr, *templatesPath)
 	router := app.NewRouter(*staticFilePath, env)
-	http.ListenAndServe(":8085", router)
+	portStr := ":8085"
+	logr.Infof("Serving on localhost%s", portStr)
+	http.ListenAndServe(portStr, router)
 }
