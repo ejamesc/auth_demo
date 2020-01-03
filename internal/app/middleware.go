@@ -114,7 +114,7 @@ func authAPIMiddleware(env *Env, adb models.SessionService) func(next router.Han
 			if tok != "" {
 				appSess, err := adb.GetSessionByToken(tok)
 				if err != nil {
-					return aderrors.New401APIError(fmt.Errorf("problem retrieving session %w", err))
+					return aderrors.New401APIError(fmt.Errorf("problem retrieving session: %w", err))
 				}
 
 				usr, err = adb.GetUserBySessionID(appSess.ID)
@@ -141,7 +141,7 @@ func authAPIMiddleware(env *Env, adb models.SessionService) func(next router.Han
 					env.log.WithFields(logrus.Fields{
 						"error":      err,
 						"session_id": sID,
-					}).Error("error retrieving session")
+					}).Error("Error retrieving session")
 					return aderrors.New401APIError(fmt.Errorf("problem retrieving session: %w", err))
 				}
 
@@ -154,7 +154,7 @@ func authAPIMiddleware(env *Env, adb models.SessionService) func(next router.Han
 					env.log.WithFields(logrus.Fields{
 						"error":      err,
 						"session_id": sID,
-					}).Error("error getting user with session ID")
+					}).Error("Error getting user with session ID")
 					delete(session.Values, sessionKey)
 					session.Save(r, w)
 					return aderrors.New401APIError(fmt.Errorf("problem retrieving user from session: %w", err))
