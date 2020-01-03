@@ -46,6 +46,33 @@ func (ss *SessionStore) GetSession(id string) (*models.Session, error) {
 	return &sess, nil
 }
 
+func (ss *SessionStore) GetSessionByToken(token string) (*models.Session, error) {
+	var sess models.Session
+	err := ss.View(func(tx *bolt.Tx) error {
+		bt := tx.Bucket(sessionTokenBucket)
+		if bt == nil {
+			return fmt.Errorf("no %s bucket exists", string(sessionTokenBucket))
+		}
+		bID := bt.Get([]byte(token))
+		if bID == nil {
+			return aderrors.ErrNoRecords
+		}
+		b := tx.Bucket(SessionBucket)
+		if b == nil {
+			return fmt.Errorf("no %s bucket exists", string(SessionBucket))
+		}
+		sJSON := b.Get(bID)
+		if sJSON == nil {
+			return aderrors.ErrNoRecords
+		}
+		return json.Unmarshal(sJSON, &sess)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &sess, nil
+}
+
 func (ss *SessionStore) GetUserBySessionID(sessionID string) (*models.User, error) {
 	sess, err := ss.GetSession(sessionID)
 	if err != nil {
@@ -61,7 +88,7 @@ func (ss *SessionStore) GetUserBySessionID(sessionID string) (*models.User, erro
 	return usr, nil
 }
 
-func (ss *SessionStore) CreateSession(userID string, isMobile bool) (*models.Session, error) {
+func (ss *SessionStore) CreateSession(userID string, tokenOnly bool) (*models.Session, error) {
 	usr, err := ss.UserStore.Get(userID)
 	if err != nil || usr == nil {
 		return nil, fmt.Errorf("error retrieving user with id %s: %w", userID, err)
@@ -69,7 +96,7 @@ func (ss *SessionStore) CreateSession(userID string, isMobile bool) (*models.Ses
 
 	sess := models.Session{
 		UserID:       userID,
-		IsMobile:     isMobile,
+		TokenOnly:    tokenOnly,
 		LoginTime:    timeNow(),
 		LastSeenTime: timeNow(),
 	}
@@ -85,7 +112,15 @@ func (ss *SessionStore) CreateSession(userID string, isMobile bool) (*models.Ses
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte(sess.ID), sJSON)
+		err = b.Put([]byte(sess.ID), sJSON)
+		if err != nil {
+			return err
+		}
+		bt := tx.Bucket(sessionTokenBucket)
+		if bt == nil {
+			return fmt.Errorf("no %s bucket exists", string(sessionTokenBucket))
+		}
+		return bt.Put([]byte(sess.Token), []byte(sess.ID))
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating session: %w", err)

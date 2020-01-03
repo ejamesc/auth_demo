@@ -81,6 +81,13 @@ func (e *Env) saveFlash(w http.ResponseWriter, req *http.Request, msg string) er
 	return nil
 }
 
+// loe stands for 'log on error'
+func (e *Env) loe(err error) {
+	if err != nil {
+		e.log.Warn(err)
+	}
+}
+
 func (e *Env) jsonAPI(w http.ResponseWriter, statusCode int, obj interface{}) error {
 	w.Header().Set("Content-Type", jsonapi.MediaType)
 	w.WriteHeader(statusCode)

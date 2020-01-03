@@ -28,7 +28,7 @@ func serveLogin(env *Env) router.HandlerError {
 			Flashes:         fs,
 			globalPresenter: env.gp,
 		}
-		env.rndr.HTML(w, http.StatusOK, "login", lp)
+		env.loe(env.rndr.HTML(w, http.StatusOK, "login", lp))
 		return nil
 	}
 }
@@ -98,7 +98,7 @@ func serveSignup(env *Env) router.HandlerError {
 			Flashes:         fs,
 			globalPresenter: env.gp,
 		}
-		env.rndr.HTML(w, http.StatusOK, "signup", lp)
+		env.loe(env.rndr.HTML(w, http.StatusOK, "signup", lp))
 		return nil
 	}
 }
@@ -239,12 +239,11 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 			apiErr := aderrors.New500APIError(fmt.Errorf("Error creating session for user: %w", err)).WithFields(logrus.Fields{"session": printStruct(sess)})
 			return apiErr
 		}
-		// TODO: Change this to jsonapi format
-		env.rndr.JSON(w, http.StatusOK, tokenStruct{AccessToken: sess.Token})
+		env.loe(env.jsonAPI(w, http.StatusCreated, &tokenStruct{ID: sess.Token}))
 		return nil
 	}
 }
 
 type tokenStruct struct {
-	AccessToken string `json:"access_token"`
+	ID string `jsonapi:"primary,token"`
 }

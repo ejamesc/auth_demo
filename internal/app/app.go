@@ -38,7 +38,6 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 
 	rter := router.New(errHandler, fakeErrHandler)
 	rter.Use(handle404Middleware(env))
-	rter.Use(notFoundHandler(env))
 	rter.Use(logHandler(env))
 	rter.Use(userMiddleware(env, sessionStore))
 
@@ -55,8 +54,15 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	apiRtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
 	apiRtr.Use(handle404APIMiddleware(env))
 
+	v1Rtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
+	v1Rtr.Use(handle404APIMiddleware(env))
+
 	rter.Handle(pat.New("/api/*"), apiRtr)
-	apiRtr.HandleE(pat.Post("/login"), serveAPIPostLogin(env, sessionStore))
+	apiRtr.Handle(pat.New("/v1/*"), v1Rtr)
+
+	apiAuth := authAPIMiddleware(env, sessionStore)
+	v1Rtr.HandleE(pat.Post("/login"), serveAPIPostLogin(env, sessionStore))
+	v1Rtr.HandleE(pat.Get("/todos"), apiAuth(serveAPITodo(env)))
 
 	return rter
 }
@@ -70,7 +76,7 @@ func serveExternalHome(env *Env) router.HandlerError {
 
 func serveSPA(env *Env) router.HandlerError {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		env.spaRndr.HTML(w, http.StatusOK, "spa", "hello world")
+		env.loe(env.spaRndr.HTML(w, http.StatusOK, "spa", "hello world"))
 		return nil
 	}
 }

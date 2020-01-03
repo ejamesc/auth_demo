@@ -92,3 +92,7 @@ func New500APIError(err error) APIStatusError {
 		StatusError:   se,
 	}
 }
+
+func New401APIError(err error) APIStatusError {
+	return NewAPIError(http.StatusUnauthorized, "Unauthorized", err)
+}

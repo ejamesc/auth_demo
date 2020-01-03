@@ -11,10 +11,11 @@ import (
 var (
 	UserBucket         = []byte("user_bucket")
 	SessionBucket      = []byte("session_bucket")
+	sessionTokenBucket = []byte("session_token_bucket")
 	userEmailBucket    = []byte("user_email_bucket")
 	userUsernameBucket = []byte("user_username_bucket")
 	TodoBucket         = []byte("todo_bucket")
-	bucketsList        = [][]byte{UserBucket, SessionBucket, userEmailBucket, userUsernameBucket, TodoBucket}
+	bucketsList        = [][]byte{UserBucket, SessionBucket, sessionTokenBucket, userEmailBucket, userUsernameBucket, TodoBucket}
 )
 
 type BDB struct {

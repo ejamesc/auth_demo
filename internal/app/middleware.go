@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ejamesc/auth_demo/internal/aderrors"
 	"github.com/ejamesc/auth_demo/internal/models"
@@ -41,29 +40,6 @@ func logHandler(env *Env) func(http.Handler) http.Handler {
 				"time":   tc,
 			}).Info(
 				fmt.Sprintf("Completed %s %s: %v %s in %v", r.Method, r.URL.Path, rw.Status(), http.StatusText(rw.Status()), tc))
-		}
-		return http.HandlerFunc(fn)
-	}
-}
-
-func notFoundHandler(env *Env) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			matchedHandler := middleware.Handler(ctx)
-			// No match found
-			if matchedHandler == nil {
-				env.log.WithFields(logrus.Fields{
-					"method": r.Method,
-					"path":   r.URL.Path,
-					"status": http.StatusNotFound,
-				}).Info(
-					fmt.Sprintf("Completed %s %s: %v %s", r.Method, r.URL.Path, http.StatusNotFound, http.StatusText(http.StatusNotFound)))
-
-				env.rndr.Text(w, 404, "404 page not found")
-			} else {
-				next.ServeHTTP(w, r)
-			}
 		}
 		return http.HandlerFunc(fn)
 	}
@@ -127,6 +103,73 @@ func authMiddleware(env *Env) func(next router.HandlerError) router.HandlerError
 	}
 }
 
+// authAPIMiddleware is the middleware layer to protect api endpoints.
+// This does not have to be placed after userMiddleware.
+func authAPIMiddleware(env *Env, adb models.SessionService) func(next router.HandlerError) router.HandlerError {
+	return func(next router.HandlerError) router.HandlerError {
+		fn := func(w http.ResponseWriter, r *http.Request) error {
+			var usr *models.User
+			tok := r.Header.Get("access_token")
+			// This is a request with an access token
+			if tok != "" {
+				appSess, err := adb.GetSessionByToken(tok)
+				if err != nil {
+					return aderrors.New401APIError(fmt.Errorf("problem retrieving session %w", err))
+				}
+
+				usr, err = adb.GetUserBySessionID(appSess.ID)
+				if err != nil {
+					env.log.WithFields(logrus.Fields{
+						"error":      err,
+						"session_id": appSess.ID,
+					}).Error("error getting user with session ID")
+				}
+
+			} else { // This is a request with cookies
+				session, err := env.store.Get(r, sessionNameConst)
+				if err != nil {
+					return aderrors.New401APIError(fmt.Errorf("no credentials detected"))
+				}
+				sessionKey, ok := session.Values[sessionKeyConst]
+				if !ok { // not logged in
+					return aderrors.New401APIError(fmt.Errorf("no credentials detected"))
+				}
+
+				sID := sessionKey.(string)
+				appSess, err := adb.GetSession(sID)
+				if err != nil {
+					env.log.WithFields(logrus.Fields{
+						"error":      err,
+						"session_id": sID,
+					}).Error("error retrieving session")
+					return aderrors.New401APIError(fmt.Errorf("problem retrieving session: %w", err))
+				}
+
+				if appSess.TokenOnly {
+					return aderrors.New401APIError(fmt.Errorf("illegal use of api token as web token"))
+				}
+
+				usr, err = adb.GetUserBySessionID(sID)
+				if err != nil {
+					env.log.WithFields(logrus.Fields{
+						"error":      err,
+						"session_id": sID,
+					}).Error("error getting user with session ID")
+					delete(session.Values, sessionKey)
+					session.Save(r, w)
+					return aderrors.New401APIError(fmt.Errorf("problem retrieving user from session: %w", err))
+				}
+			}
+
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, userKeyConst, usr)
+			r = r.WithContext(ctx)
+			return next(w, r)
+		}
+		return fn
+	}
+}
+
 // NOTE: 404s are not handled by the errorhandler below, because goji
 // does 404s before the middleware stack. So we have to have an explicit
 // middleware. See: https://github.com/goji/goji/issues/20
@@ -134,8 +177,15 @@ func handle404Middleware(env *Env) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			if middleware.Handler(r.Context()) == nil {
+				env.log.WithFields(logrus.Fields{
+					"method": r.Method,
+					"path":   r.URL.Path,
+					"status": http.StatusNotFound,
+				}).Info(
+					fmt.Sprintf("Completed %s %s: %v %s", r.Method, r.URL.Path, http.StatusNotFound, http.StatusText(http.StatusNotFound)))
+
 				lp := &localPresenter{PageTitle: "404 Page Not Found", PageURL: r.URL.String(), globalPresenter: env.gp}
-				env.rndr.HTML(w, http.StatusNotFound, "404", lp)
+				env.loe(env.rndr.HTML(w, http.StatusNotFound, "404", lp))
 			} else {
 				next.ServeHTTP(w, r)
 			}
@@ -161,6 +211,7 @@ func handle404APIMiddleware(env *Env) func(http.Handler) http.Handler {
 	}
 }
 
+// Generic error handler for all http routes
 func errorHandler(env *Env) router.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		lp := &localPresenter{PageTitle: "500 Internal Server Error", PageURL: r.URL.String(), globalPresenter: env.gp}
@@ -169,18 +220,19 @@ func errorHandler(env *Env) router.ErrorHandler {
 		case aderrors.StatusError:
 			// No router 404 errors will be processed here, because Goji requires 404s to be captured at the middleware layer.
 			if e.Status() == 500 {
-				env.rndr.HTML(w, e.Status(), "500", lp)
+				env.loe(env.rndr.HTML(w, e.Status(), "500", lp))
 			}
 			env.log.WithFields(e.Fields()).Error(e)
 		default:
 			// Any error types we don't specifically look out for default to serving a terrible HTTP 500
-			//
 			env.log.Error(e)
-			env.rndr.HTML(w, http.StatusInternalServerError, "500", lp)
+			env.loe(env.rndr.HTML(w, http.StatusInternalServerError, "500", lp))
 		}
 	}
 }
 
+// Generic API error handler for all api routes
+// Translates APIStatusError into a jsonapi Error Object
 func apiErrorHandler(env *Env) router.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		switch e := err.(type) {
@@ -196,8 +248,4 @@ func apiErrorHandler(env *Env) router.ErrorHandler {
 			env.rndr.JSON(w, http.StatusInternalServerError, e)
 		}
 	}
-}
-
-func timeNow() time.Time {
-	return time.Now().In(time.UTC)
 }
