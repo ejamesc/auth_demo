@@ -23,6 +23,9 @@ func tempGenerateULID() string {
 }
 
 func nsp(ns null.String) *null.String {
+	if ns.IsZero() {
+		return nil
+	}
 	return &ns
 }
 
