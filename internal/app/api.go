@@ -6,12 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ejamesc/auth_demo/internal/aderrors"
 	"github.com/ejamesc/auth_demo/pkg/router"
 	ulid "github.com/oklog/ulid/v2"
 	null "gopkg.in/guregu/null.v3"
 )
 
-type Todo struct {
+// DemoTodo is a demo struct to demonstrate how to do null pointers
+type DemoTodo struct {
 	ID     string       `jsonapi:"primary,todo"`
 	Name   *null.String `jsonapi:"attr,name,omitempty"`
 	IsDone null.Bool    `jsonapi:"attr,is_done"`
@@ -31,12 +33,21 @@ func nsp(ns null.String) *null.String {
 
 func serveAPITodo(env *Env) router.HandlerError {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		td := []*Todo{
-			&Todo{ID: tempGenerateULID(), Name: nsp(null.StringFrom("Some random todo")), IsDone: null.BoolFrom(false)},
-			&Todo{ID: tempGenerateULID(), Name: nsp(null.NewString("", false)), IsDone: null.BoolFrom(true)},
-			&Todo{ID: tempGenerateULID(), Name: nil, IsDone: null.BoolFrom(true)},
+		if !isJSONAPIMediaType(r) {
+			return aderrors.ErrNotJSONAPIMediaType
+		}
+		td := []*DemoTodo{
+			&DemoTodo{ID: tempGenerateULID(), Name: nsp(null.StringFrom("Some random todo")), IsDone: null.BoolFrom(false)},
+			&DemoTodo{ID: tempGenerateULID(), Name: nsp(null.NewString("", false)), IsDone: null.BoolFrom(true)},
+			&DemoTodo{ID: tempGenerateULID(), Name: nil, IsDone: null.BoolFrom(true)},
 		}
 		env.loe(env.jsonAPI(w, http.StatusOK, td))
+		return nil
+	}
+}
+
+func serveCreateAPITodo(env *Env) router.HandlerError {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 }

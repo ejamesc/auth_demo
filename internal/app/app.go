@@ -2,11 +2,13 @@ package app
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 
 	"github.com/boltdb/bolt"
 	"github.com/ejamesc/auth_demo/internal/datastore"
+	"github.com/gorilla/csrf"
 
 	"github.com/ejamesc/auth_demo/pkg/router"
 	"goji.io/pat"
@@ -37,7 +39,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	apiErrHandler := apiErrorHandler(env)
 
 	rter := router.New(errHandler, fakeErrHandler)
-	rter.Use(handle404Middleware(env))
+	rter.Use(handle404Middleware(env)) // goji only handles 404s here
 	rter.Use(logHandler(env))
 	rter.Use(userMiddleware(env, sessionStore))
 
@@ -57,12 +59,21 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	v1Rtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
 	v1Rtr.Use(handle404APIMiddleware(env))
 
+	// csrf.Secure(false) should not be set during production
+	csrfAPIMdware := csrf.Protect(
+		[]byte("bN?>2A&X]3a8dvQ-ge/0C3~[UDlcn9[L"),
+		csrf.Secure(false),
+		csrf.ErrorHandler(csrfErrHandler(env)),
+	)
+	v1Rtr.Use(csrfMiddleware(csrfAPIMdware))
+
 	rter.Handle(pat.New("/api/*"), apiRtr)
 	apiRtr.Handle(pat.New("/v1/*"), v1Rtr)
 
 	apiAuth := authAPIMiddleware(env, sessionStore)
 	v1Rtr.HandleE(pat.Post("/login"), serveAPIPostLogin(env, sessionStore))
 	v1Rtr.HandleE(pat.Get("/todos"), apiAuth(serveAPITodo(env)))
+	v1Rtr.HandleE(pat.Post("/todos"), apiAuth(serveAPITodo(env)))
 
 	return rter
 }
@@ -101,6 +112,7 @@ type localPresenter struct {
 	PageTitle        string
 	PageURL          string
 	LocalDescription string
+	CSRFTag          template.HTML
 	Flashes          []interface{}
 	*globalPresenter
 }

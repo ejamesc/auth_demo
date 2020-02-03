@@ -12,6 +12,12 @@ import (
 var ErrNoRecords = errors.New("No records found")
 var ErrNoID = errors.New("No ID supplied")
 var ErrAlreadyExists = errors.New("Entity already exists")
+var ErrNotJSONAPIMediaType = APIStatusError{
+	PublicMessage: "Content-Type header is not application/vnd.api+json",
+	StatusError: StatusError{
+		Code: http.StatusUnsupportedMediaType,
+		Err:  nil,
+	}}
 
 // StatusError represents an error with an associated HTTP status code.
 type StatusError struct {

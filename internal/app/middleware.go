@@ -12,6 +12,7 @@ import (
 	"github.com/ejamesc/auth_demo/pkg/router"
 
 	"github.com/google/jsonapi"
+	"github.com/gorilla/csrf"
 	"github.com/sirupsen/logrus"
 	"goji.io/middleware"
 )
@@ -211,6 +212,28 @@ func handle404APIMiddleware(env *Env) func(http.Handler) http.Handler {
 	}
 }
 
+// csrfMiddleware applies the csrfMiddleware ønly if this is a cookie-based auth.
+func csrfMiddleware(csrfmdware func(http.Handler) http.Handler) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			tok := r.Header.Get("access_token")
+			// This is a request with an access token
+			if tok != "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			// Exceptions go here
+			if strings.Contains(r.RequestURI, "/api/v1/login") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			// Otherwise, this is a request with a cookie
+			csrfmdware(next).ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
 // Generic error handler for all http routes
 func errorHandler(env *Env) router.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
@@ -248,4 +271,16 @@ func apiErrorHandler(env *Env) router.ErrorHandler {
 			env.rndr.JSON(w, http.StatusInternalServerError, e)
 		}
 	}
+}
+
+func csrfErrHandler(env *Env) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		err := csrf.FailureReason(r)
+		errObj := &jsonapi.ErrorObject{
+			Status: strconv.Itoa(http.StatusForbidden),
+			Title:  err.Error(),
+		}
+		env.jsonAPIErr(w, http.StatusForbidden, []*jsonapi.ErrorObject{errObj})
+	}
+	return http.HandlerFunc(fn)
 }
