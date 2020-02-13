@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/ejamesc/auth_demo/internal/app"
@@ -48,10 +49,21 @@ The options are:`)
 		logr.Fatalf("unable to set boltdb: %s", err)
 	}
 
-	fmt.Println(*templatesPath, *staticFilePath)
 	env := app.NewEnv(logr, *templatesPath)
-	router := app.NewRouter(*staticFilePath, env)
+	rter := app.NewRouter(*staticFilePath, env)
 	portStr := ":8085"
+	serv := &http.Server{
+		// It's important to set timeouts so you don't explode
+		// More info here: https://blog.simon-frey.eu/go-as-in-golang-standard-net-http-config-will-break-your-production/
+		// And: https://ieftimov.com/post/make-resilient-golang-net-http-servers-using-timeouts-deadlines-context-cancellation/
+		ReadHeaderTimeout: 20 * time.Second,
+		ReadTimeout:       1 * time.Minute,
+		WriteTimeout:      2 * time.Minute,
+
+		Handler: rter,
+		Addr:    portStr,
+	}
+	logr.Infof("Template path: '%s', static path: '%s'", *templatesPath, *staticFilePath)
 	logr.Infof("Serving on localhost%s", portStr)
-	http.ListenAndServe(portStr, router)
+	serv.ListenAndServe()
 }

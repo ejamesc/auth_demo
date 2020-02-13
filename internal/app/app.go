@@ -59,7 +59,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	v1Rtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
 	v1Rtr.Use(handle404APIMiddleware(env))
 
-	// csrf.Secure(false) should not be set during production
+	// TODO: csrf.Secure(false) should not be set during production
 	csrfAPIMdware := csrf.Protect(
 		[]byte("bN?>2A&X]3a8dvQ-ge/0C3~[UDlcn9[L"),
 		csrf.Secure(false),
