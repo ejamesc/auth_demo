@@ -11,14 +11,6 @@ import (
 	"github.com/unrolled/render"
 )
 
-// In a real production app, it isn't recommended to embed cookie secrets into source code.
-const (
-	cookieSecretKey  = "cOWOs._Ew*nG{<Wu,,MLubJx71-F2.913<RDIuE|VLAf%:5t q4|+lC#{~MwmBh1"
-	sessionNameConst = "session-auth_demo-3501382"
-	sessionKeyConst  = "session_key-auth_demo-1293485"
-	userKeyConst     = "user-key-2401851"
-)
-
 type Env struct {
 	rndr    *render.Render
 	spaRndr *render.Render

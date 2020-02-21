@@ -61,7 +61,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 
 	// TODO: csrf.Secure(false) should not be set during production
 	csrfAPIMdware := csrf.Protect(
-		[]byte("bN?>2A&X]3a8dvQ-ge/0C3~[UDlcn9[L"),
+		[]byte(csrfSecretKey),
 		csrf.Secure(false),
 		csrf.ErrorHandler(csrfErrHandler(env)),
 	)
