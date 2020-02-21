@@ -15,6 +15,7 @@
     "webpack:prod": "webpack $npm_package_config_webpack_args --env=prod"
   },
   "dependencies": {
+    "mergerino": "^0.4.0",
     "mithril": "^2.0.4",
     "tachyons": "^4.11.1"
   },
