@@ -3,26 +3,40 @@ import "../css/styles.scss";
 import m from "mithril";
 import Stream from "mithril/stream";
 import mergerino from "mergerino";
-import cardComponent from "./card";
+import meiosisMergerino from "meiosis-setup/mergerino";
+
+import { AppComponent } from "./app";
+import { Route, navTo, router } from "./router";
 
 const merge = mergerino;
 const root = document.body;
-console.log(cardComponent);
 
-var app = {
+const app = {
+  patch: navTo([Route.Home()]),
   initial: Object.assign({
     "todos": [],
   }),
   Actions: function(update) {
-    return Object.assign({});
+    return Object.assign({
+      navigateTo: route => update(navTo(route)),
+    });
   }
 };
 
-var update = Stream();
-var states = Stream.scan(merge, app.initial, update);
-var actions = app.Actions(update);
+const { update, states, actions } = 
+  meiosisMergerino({ stream: Stream, merge, app });
 
-window.addEventListener("DOMContentLoaded", 
-  m.mount(root, {
-    view: () => m(cardComponent, {states: states(), actions: actions})
-  }));
+window.addEventListener("DOMContentLoaded", main);
+
+function main() {
+  console.log(app);
+
+  m.route(
+    root, 
+    "/c",
+    router.MithrilRoutes({ states, actions, App: AppComponent })
+  );
+
+  states.map(() => m.redraw());
+  states.map(state => router.locationBarSync(state.route));
+}

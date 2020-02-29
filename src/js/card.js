@@ -1,13 +1,11 @@
 import m from "mithril";
 
-const cardComponent = {
+export const Card = {
   view: (vnode) => {
-    var {states, actions} = vnode.attrs;
-    console.log(states);
+    var {state, actions} = vnode.attrs;
+    console.log(state);
     console.log(actions);
-    return m(".ph4.pv4", 
-      m("p.measure-wide", "Hello from a module"));
+    return m(".pa4", 
+      m("p.measure-wide", "This is a card component"));
   }
 };
-
-export default cardComponent;

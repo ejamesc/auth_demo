@@ -3522,6 +3522,16 @@ mdn-data@~1.1.0:
   resolved "https://registry.yarnpkg.com/mdn-data/-/mdn-data-1.1.4.tgz#50b5d4ffc4575276573c4eedb8780812a8419f01"
   integrity sha512-FSYbp3lyKjyj3E7fMl6rYvUdX0FBXaluGqlFoYESWQlyUTq8R+wp0rkFxoYFqZlHCvsUXGjyJmLQSnXToYhOSA==
 
+meiosis-routing@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/meiosis-routing/-/meiosis-routing-2.0.1.tgz#504a99fec139cc970775b3d973f6f0dc426946d5"
+  integrity sha512-pDbklWntH/DFCmncyd2uRcyFkwGckQtpFgZDGHxZ3PzhhPmGvbwDsgi6tMA+wPBQOP8CAPmo4cOfpzzxMNNF4g==
+
+meiosis-setup@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/meiosis-setup/-/meiosis-setup-3.1.0.tgz#f04a65258af76c22161ebe406aee0bb9c2a27ff9"
+  integrity sha512-wJ+mzkP6oWkpPXdAB4ve5GO6+07zkvNCwzNfB/yuhI0ysbmTWze8eWUIJ+WYfkcjqyM+z7bTNscLiDmH5GqDWw==
+
 mem@^4.0.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/mem/-/mem-4.3.0.tgz#461af497bc4ae09608cdb2e60eefb69bff744178"
