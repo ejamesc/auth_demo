@@ -26,13 +26,13 @@ const Root = {
     const routing = Routing(state.route);
     const Component = componentMap[routing.localSegment.id];
     const isActive = tab => tab === Component; 
-    console.log(routing.localSegment.id);
+    console.log(routing);
 
     return m("main.w-100", 
       [
         m(".fl.w-100.w-20-ns", [
-          m("a.pl3", {href: router.toPath([Route.Home()])}, "Home"),
-          m("a.pl3", {href: router.toPath([Route.Card()])}, "Card")
+          m(m.route.Link, {href: router.toPath([Route.Home()]), class: "pl3"}, "Home"),
+          m(m.route.Link, {href: router.toPath([Route.Card()]), class: "pl3"}, "Card")
         ]),
         m(".fl.w-100.w-80-ns", m(Component, {state, actions, routing}))
       ]);

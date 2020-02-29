@@ -47,6 +47,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 
 	rter.HandleE(pat.Get("/"), serveExternalHome(env))
 	rter.HandleE(pat.Get("/c"), authM(serveSPA(env)))
+	rter.HandleE(pat.Get("/card"), authM(serveSPA(env)))
 	rter.HandleE(pat.Get("/login"), serveLogin(env))
 	rter.HandleE(pat.Post("/login"), servePostLogin(env, sessionStore))
 	rter.HandleE(pat.Get("/signup"), serveSignup(env))

@@ -17,9 +17,11 @@ const app = {
     "todos": [],
   }),
   Actions: function(update) {
-    return Object.assign({
-      navigateTo: route => update(navTo(route)),
-    });
+    const navigateTo = route => update(navTo(route));
+        
+    return {
+      navigateTo,
+    };
   }
 };
 
@@ -29,8 +31,9 @@ const { update, states, actions } =
 window.addEventListener("DOMContentLoaded", main);
 
 function main() {
-  console.log(app);
+  console.log(router.MithrilRoutes({ states, actions, App: AppComponent }));
 
+  m.route.prefix = "";
   m.route(
     root, 
     "/c",
