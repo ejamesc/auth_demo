@@ -7,6 +7,7 @@ import meiosisMergerino from "meiosis-setup/mergerino";
 
 import { AppComponent } from "./app";
 import { Route, navTo, router } from "./router";
+import { routeService, todoLoadService } from "./services";
 
 const merge = mergerino;
 const root = document.body;
@@ -18,11 +19,28 @@ const app = {
   }),
   Actions: function(update) {
     const navigateTo = route => update(navTo(route));
+    const getTodo = () => {
+      m.request({
+        method: "GET",
+        url: "/api/v1/todos",
+        headers: {
+          //"Content-Type": "application/vnd.api+json"
+        }
+      })
+        .then((result) => {
+          console.log(result);
+          update({todo: result});
+        }).catch((e) => {
+          console.log(JSON.stringify(e));
+        });
+    };
         
     return {
       navigateTo,
+      getTodo,
     };
-  }
+  },
+  services: [routeService, todoLoadService]
 };
 
 const { update, states, actions } = 
@@ -31,8 +49,6 @@ const { update, states, actions } =
 window.addEventListener("DOMContentLoaded", main);
 
 function main() {
-  console.log(router.MithrilRoutes({ states, actions, App: AppComponent }));
-
   m.route.prefix = "";
   m.route(
     root, 
@@ -40,6 +56,7 @@ function main() {
     router.MithrilRoutes({ states, actions, App: AppComponent })
   );
 
+  // Necessary for when programmatically navigating to something
   states.map(() => m.redraw());
   states.map(state => router.locationBarSync(state.route));
 }

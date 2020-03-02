@@ -1,9 +1,7 @@
 import m from "mithril";
 import { Routing } from "meiosis-routing/state";
 
-import { Route, navTo, router } from "./router";
-import { Card } from "./card";
-import { Home } from "./home";
+import { Route, navTo, router, componentMap } from "./router";
 
 // Top level app structure for JS
 export const AppComponent = {
@@ -11,22 +9,12 @@ export const AppComponent = {
     m(Root, { state, actions })
 };
 
-const NotFound = {
-  view: () => m("p", "Not Found")
-};
-
-const componentMap = {
-  Home,
-  Card,
-  NotFound
-};
-
 const Root = {
   view: ({attrs: {state, actions}}) => {
     const routing = Routing(state.route);
     const Component = componentMap[routing.localSegment.id];
     const isActive = tab => tab === Component; 
-    console.log(routing);
+    console.log(state);
 
     return m("main.w-100", 
       [
