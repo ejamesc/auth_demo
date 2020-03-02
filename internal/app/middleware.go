@@ -238,7 +238,6 @@ func csrfMiddleware(csrfmdware func(http.Handler) http.Handler) func(http.Handle
 func errorHandler(env *Env) router.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		lp := &localPresenter{PageTitle: "500 Internal Server Error", PageURL: r.URL.String(), globalPresenter: env.gp}
-
 		switch e := err.(type) {
 		case aderrors.StatusError:
 			// No router 404 errors will be processed here, because Goji requires 404s to be captured at the middleware layer.
@@ -260,14 +259,14 @@ func apiErrorHandler(env *Env) router.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		switch e := err.(type) {
 		case aderrors.APIStatusError:
-			env.log.WithFields(e.Fields()).Error(e)
+			env.log.WithFields(e.Fields()).Error(e.Error())
 			errObj := &jsonapi.ErrorObject{
 				Status: strconv.Itoa(e.Status()),
 				Title:  e.PublicMessage,
 			}
 			env.jsonAPIErr(w, e.Status(), []*jsonapi.ErrorObject{errObj})
 		default:
-			env.log.Error(e)
+			env.log.Errorf("%+v", e)
 			env.rndr.JSON(w, http.StatusInternalServerError, e)
 		}
 	}

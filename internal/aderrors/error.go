@@ -28,6 +28,9 @@ type StatusError struct {
 
 // Allows StatusError to satisfy the error interface.
 func (se StatusError) Error() string {
+	if se.Err == nil {
+		return ""
+	}
 	return se.Err.Error()
 }
 
@@ -60,6 +63,13 @@ type APIStatusError struct {
 func (ase APIStatusError) WithFields(f logrus.Fields) APIStatusError {
 	ase.fields = f
 	return ase
+}
+
+func (ase APIStatusError) Error() string {
+	if ase.StatusError.Error() != "" {
+		return ase.StatusError.Error()
+	}
+	return ase.PublicMessage
 }
 
 // NewError creates a new StatusError.

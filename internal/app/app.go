@@ -33,7 +33,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	ustore := &datastore.UserStore{BDB: pdb}
 	sessionStore := &datastore.SessionStore{BDB: pdb, UserStore: ustore}
 	fakeErrHandler := func(w http.ResponseWriter, req *http.Request, err error) {
-		env.log.Error(err)
+		env.log.Errorf("%+v", err)
 	}
 	errHandler := errorHandler(env)
 	apiErrHandler := apiErrorHandler(env)
