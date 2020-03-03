@@ -66,8 +66,8 @@ func (ase APIStatusError) WithFields(f logrus.Fields) APIStatusError {
 }
 
 func (ase APIStatusError) Error() string {
-	if ase.StatusError.Error() != "" {
-		return ase.StatusError.Error()
+	if eStr := ase.StatusError.Error(); eStr != "" {
+		return eStr
 	}
 	return ase.PublicMessage
 }

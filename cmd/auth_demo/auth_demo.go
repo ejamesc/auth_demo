@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -49,6 +52,11 @@ The options are:`)
 		logr.Fatalf("unable to set boltdb: %s", err)
 	}
 
+	doneCh := make(chan bool, 1)
+	quitCh := make(chan os.Signal, 1)
+
+	signal.Notify(quitCh, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	env := app.NewEnv(logr, *templatesPath)
 	rter := app.NewRouter(*staticFilePath, env)
 	portStr := ":8085"
@@ -63,7 +71,33 @@ The options are:`)
 		Handler: rter,
 		Addr:    portStr,
 	}
+
+	// Graceful shutdown
+	go func() {
+		<-quitCh
+
+		logr.Infof("Server is shutting down")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer func() {
+			// Other cleanups should go here, e.g. cleaning up connections
+			// to db, etc
+			cancel()
+		}()
+
+		if err := serv.Shutdown(ctx); err != nil {
+			logr.Fatalf("Server failed to shutdown gracefully, %v", err)
+		}
+
+		close(doneCh)
+	}()
+
 	logr.Infof("Template path: '%s', static path: '%s'", *templatesPath, *staticFilePath)
 	logr.Infof("Serving on localhost%s", portStr)
-	serv.ListenAndServe()
+	if err = serv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logr.Fatalf("Failed to start server: %s", err)
+	}
+
+	<-doneCh
+	logr.Infof("Server shutdown gracefully")
 }
