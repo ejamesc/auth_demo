@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
 
@@ -45,9 +44,16 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 
 	authM := authMiddleware(env)
 
+	// TODO: csrf.Secure(false) should not be set during production
+	csrfAPIMdware := csrf.Protect(
+		[]byte(csrfSecretKey),
+		csrf.Secure(false),
+		csrf.ErrorHandler(csrfErrHandler(env)),
+	)
+
 	rter.HandleE(pat.Get("/"), serveExternalHome(env))
-	rter.HandleE(pat.Get("/c"), authM(serveSPA(env)))
-	rter.HandleE(pat.Get("/card"), authM(serveSPA(env)))
+	rter.HandleE(pat.Get("/c"), authM(serveSPA(env, csrfAPIMdware)))
+	rter.HandleE(pat.Get("/card"), authM(serveSPA(env, csrfAPIMdware)))
 	rter.HandleE(pat.Get("/login"), serveLogin(env))
 	rter.HandleE(pat.Post("/login"), servePostLogin(env, sessionStore))
 	rter.HandleE(pat.Get("/signup"), serveSignup(env))
@@ -60,12 +66,6 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	v1Rtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
 	v1Rtr.Use(handle404APIMiddleware(env))
 
-	// TODO: csrf.Secure(false) should not be set during production
-	csrfAPIMdware := csrf.Protect(
-		[]byte(csrfSecretKey),
-		csrf.Secure(false),
-		csrf.ErrorHandler(csrfErrHandler(env)),
-	)
 	v1Rtr.Use(csrfMiddleware(csrfAPIMdware))
 
 	rter.Handle(pat.New("/api/*"), apiRtr)
@@ -86,9 +86,16 @@ func serveExternalHome(env *Env) router.HandlerError {
 	}
 }
 
-func serveSPA(env *Env) router.HandlerError {
+func serveSPA(env *Env, csrfmdware func(http.Handler) http.Handler) router.HandlerError {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		env.loe(env.spaRndr.HTML(w, http.StatusOK, "spa", "hello world"))
+		h := csrfmdware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			lp := &localPresenter{
+				globalPresenter: env.gp,
+				CSRFToken:       csrf.Token(r),
+			}
+			env.loe(env.spaRndr.HTML(w, http.StatusOK, "spa", lp))
+		}))
+		h.ServeHTTP(w, r)
 		return nil
 	}
 }
@@ -113,7 +120,7 @@ type localPresenter struct {
 	PageTitle        string
 	PageURL          string
 	LocalDescription string
-	CSRFTag          template.HTML
+	CSRFToken        string
 	Flashes          []interface{}
 	*globalPresenter
 }

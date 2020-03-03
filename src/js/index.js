@@ -24,15 +24,18 @@ const app = {
         method: "GET",
         url: "/api/v1/todos",
         headers: {
-          //"Content-Type": "application/vnd.api+json"
+          "Content-Type": "application/vnd.api+json"
         }
       })
         .then((result) => {
           console.log(result);
-          update({todo: result});
+          update({todos: result});
         }).catch((e) => {
           console.log(JSON.stringify(e));
         });
+    };
+    const postTodo = () => {
+
     };
         
     return {
@@ -49,6 +52,7 @@ const { update, states, actions } =
 window.addEventListener("DOMContentLoaded", main);
 
 function main() {
+  update({"csrf-token": document.getElementsByTagName("meta")["csrf.Token"].getAttribute("content")});
   m.route.prefix = "";
   m.route(
     root, 
