@@ -31,6 +31,7 @@ func SetDB(db *bolt.DB) error {
 func NewRouter(staticFilePath string, env *Env) *router.Router {
 	ustore := &datastore.UserStore{BDB: pdb}
 	sessionStore := &datastore.SessionStore{BDB: pdb, UserStore: ustore}
+	tdstore := &datastore.TodoStore{BDB: pdb}
 	fakeErrHandler := func(w http.ResponseWriter, req *http.Request, err error) {
 		env.log.Errorf("%+v", err)
 	}
@@ -65,6 +66,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 
 	v1Rtr := router.NewSubMux(apiErrHandler, fakeErrHandler)
 	v1Rtr.Use(handle404APIMiddleware(env))
+	v1Rtr.Use(jsonAPIMiddleware(env))
 
 	v1Rtr.Use(csrfMiddleware(csrfAPIMdware))
 
@@ -74,7 +76,7 @@ func NewRouter(staticFilePath string, env *Env) *router.Router {
 	apiAuth := authAPIMiddleware(env, sessionStore)
 	v1Rtr.HandleE(pat.Post("/login"), serveAPIPostLogin(env, sessionStore))
 	v1Rtr.HandleE(pat.Get("/todos"), apiAuth(serveAPITodo(env)))
-	v1Rtr.HandleE(pat.Post("/todos"), apiAuth(serveAPITodo(env)))
+	v1Rtr.HandleE(pat.Post("/todos"), apiAuth(serveCreateAPITodo(env, tdstore)))
 
 	return rter
 }

@@ -40,14 +40,14 @@ func servePostLogin(env *Env, sdb models.SessionService) router.HandlerError {
 			env.saveFlash(w, r, "That's not a valid email.")
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return aderrors.NewError(
-				http.StatusBadRequest, "Invalid email provided", nil).WithFields(
+				http.StatusBadRequest, "invalid email provided", nil).WithFields(
 				logrus.Fields{"email": email})
 		}
 
 		if strings.TrimSpace(pass) == "" {
 			env.saveFlash(w, r, "You need to provide a password.")
 			http.Redirect(w, r, "/login", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "No password provided", nil)
+			return aderrors.NewError(http.StatusBadRequest, "no password provided", nil)
 		}
 
 		u, err := sdb.GetUserByEmail(email)
@@ -58,7 +58,7 @@ func servePostLogin(env *Env, sdb models.SessionService) router.HandlerError {
 				u = &models.User{}
 				u.CheckPassword(pass)
 				http.Redirect(w, r, "/login", http.StatusFound)
-				return aderrors.NewError(http.StatusBadRequest, "No user found", nil).WithFields(
+				return aderrors.NewError(http.StatusBadRequest, "no user found", nil).WithFields(
 					logrus.Fields{"email": email})
 			} else {
 				return aderrors.New500Error("error with retrieving user in login", err)
@@ -69,7 +69,7 @@ func servePostLogin(env *Env, sdb models.SessionService) router.HandlerError {
 		if !passOK {
 			env.saveFlash(w, r, "Your email or password were incorrect")
 			http.Redirect(w, r, "/login", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "No user found", nil).WithFields(
+			return aderrors.NewError(http.StatusBadRequest, "no user found", nil).WithFields(
 				logrus.Fields{"email": email})
 		}
 
@@ -112,26 +112,26 @@ func servePostSignup(env *Env, sdb models.SessionService) router.HandlerError {
 		if !govalidator.IsEmail(email) {
 			env.saveFlash(w, r, "That's not a valid email.")
 			http.Redirect(w, r, "/signup", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "Invalid email provided", nil)
+			return aderrors.NewError(http.StatusBadRequest, "invalid email provided", nil)
 		}
 
 		if strings.TrimSpace(pass) == "" {
 			env.saveFlash(w, r, "You need to provide a password!")
 			http.Redirect(w, r, "/signup", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "No password provided", nil)
+			return aderrors.NewError(http.StatusBadRequest, "no password provided", nil)
 		}
 
 		username = strings.ToLower(strings.Replace(username, " ", "_", -1))
 		if username == "" {
 			env.saveFlash(w, r, "You need to provide a username!")
 			http.Redirect(w, r, "/signup", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "No username provided", nil)
+			return aderrors.NewError(http.StatusBadRequest, "no username provided", nil)
 		}
 
 		if len(username) < 2 {
 			env.saveFlash(w, r, "A username needs to be at least 2 characters long.")
 			http.Redirect(w, r, "/signup", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "Username too short", nil)
+			return aderrors.NewError(http.StatusBadRequest, "username too short", nil)
 		}
 
 		u, err := sdb.GetUserByEmail(email)
@@ -141,7 +141,7 @@ func servePostSignup(env *Env, sdb models.SessionService) router.HandlerError {
 		if u != nil {
 			env.saveFlash(w, r, "That email is already taken!")
 			http.Redirect(w, r, "/signup", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "Email already taken", nil).WithFields(logrus.Fields{"email": email})
+			return aderrors.NewError(http.StatusBadRequest, "email already taken", nil).WithFields(logrus.Fields{"email": email})
 		}
 
 		u, err = sdb.GetUserByUsername(username)
@@ -153,7 +153,7 @@ func servePostSignup(env *Env, sdb models.SessionService) router.HandlerError {
 			env.log.WithField("user", u).Println("there is a user with that username")
 			env.saveFlash(w, r, "That username is already taken!")
 			http.Redirect(w, r, "/signup", http.StatusFound)
-			return aderrors.NewError(http.StatusBadRequest, "Username already taken", nil).WithFields(logrus.Fields{"username": username})
+			return aderrors.NewError(http.StatusBadRequest, "username already taken", nil).WithFields(logrus.Fields{"username": username})
 		}
 
 		username = strings.ToLower(strings.Replace(username, " ", "_", -1))
@@ -202,13 +202,13 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 
 		if !govalidator.IsEmail(alogin.Email) {
 			apiErr := aderrors.NewAPIError(
-				http.StatusBadRequest, "Invalid email provided", fmt.Errorf("Invalid email")).WithFields(
+				http.StatusBadRequest, "invalid email provided", fmt.Errorf("Invalid email")).WithFields(
 				logrus.Fields{"email": alogin.Email})
 			return apiErr
 		}
 
 		if strings.TrimSpace(alogin.Password) == "" {
-			apiErr := aderrors.NewAPIError(http.StatusBadRequest, "No password provided", fmt.Errorf("No password provided"))
+			apiErr := aderrors.NewAPIError(http.StatusBadRequest, "no password provided", fmt.Errorf("No password provided"))
 			return apiErr
 		}
 
@@ -218,25 +218,25 @@ func serveAPIPostLogin(env *Env, sdb models.SessionService) router.HandlerError 
 				// check pass to prevent timing attack, so extra
 				u = &models.User{}
 				u.CheckPassword(alogin.Password)
-				apiErr := aderrors.NewAPIError(http.StatusBadRequest, "No user found", fmt.Errorf("No user found")).WithFields(
+				apiErr := aderrors.NewAPIError(http.StatusBadRequest, "no user found", fmt.Errorf("No user found")).WithFields(
 					logrus.Fields{"email": alogin.Email})
 				return apiErr
 			} else {
-				apiErr := aderrors.New500APIError(fmt.Errorf("Error retrieving user: %w", err))
+				apiErr := aderrors.New500APIError(fmt.Errorf("error retrieving user: %w", err))
 				return apiErr
 			}
 		}
 
 		passOK := u.CheckPassword(alogin.Password)
 		if !passOK {
-			apiErr := aderrors.NewAPIError(http.StatusBadRequest, "Your email or password was incorrect", fmt.Errorf("Password check failed")).WithFields(
+			apiErr := aderrors.NewAPIError(http.StatusBadRequest, "your email or password was incorrect", fmt.Errorf("Password check failed")).WithFields(
 				logrus.Fields{"email": alogin.Email})
 			return apiErr
 		}
 
 		sess, err := sdb.CreateSession(u.ID, true)
 		if err != nil {
-			apiErr := aderrors.New500APIError(fmt.Errorf("Error creating session for user: %w", err)).WithFields(logrus.Fields{"session": printStruct(sess)})
+			apiErr := aderrors.New500APIError(fmt.Errorf("error creating session for user: %w", err)).WithFields(logrus.Fields{"session": printStruct(sess)})
 			return apiErr
 		}
 		env.loe(env.jsonAPI(w, http.StatusCreated, &tokenStruct{ID: sess.Token}))

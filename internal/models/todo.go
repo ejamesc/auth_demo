@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	null "gopkg.in/guregu/null.v3"
+)
 
 type TodoService interface {
 	Get(id string) (*Todo, error)
@@ -10,10 +12,10 @@ type TodoService interface {
 }
 
 type Todo struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	IsDone      bool      `json:"is_done"`
-	DateCreated time.Time `json:"date_created"`
+	ID          string      `jsonapi:"primary,todo"`
+	Name        null.String `jsonapi:"attr,name"`
+	IsDone      null.Bool   `jsonapi:"attr,is_done"`
+	DateCreated null.Time   `jsonapi:"attr,date_created"`
 }
 
 func (t *Todo) GenerateID() {

@@ -9,9 +9,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var ErrNoRecords = errors.New("No records found")
-var ErrNoID = errors.New("No ID supplied")
-var ErrAlreadyExists = errors.New("Entity already exists")
+var ErrNoRecords = errors.New("no records found")
+var ErrNoID = errors.New("no ID supplied")
+var ErrAlreadyExists = errors.New("entity already exists")
 var ErrNotJSONAPIMediaType = APIStatusError{
 	PublicMessage: "Content-Type header is not application/vnd.api+json",
 	StatusError: StatusError{

@@ -22,10 +22,6 @@ func timeNow() time.Time {
 // bodies.
 // See: https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body for more info.
 func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
-	if !isJSONAPIMediaType(r) {
-		return aderrors.ErrNotJSONAPIMediaType
-	}
-
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
 	dec := json.NewDecoder(r.Body)
@@ -83,6 +79,7 @@ func isJSONAPIMediaType(r *http.Request) bool {
 	// information in the header.
 	if r.Header.Get("Content-Type") != "" {
 		value, _ := header.ParseValueAndParams(r.Header, "Content-Type")
+		fmt.Println(value)
 		return value == jsonapi.MediaType
 	}
 	return false

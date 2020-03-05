@@ -84,6 +84,26 @@ func userMiddleware(env *Env, adb models.SessionService) func(http.Handler) http
 	}
 }
 
+// jsonAPIMiddleware checks for that the media type is application/vnd.api+json
+func jsonAPIMiddleware(env *Env) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			if !isJSONAPIMediaType(r) {
+				e := aderrors.ErrNotJSONAPIMediaType
+				env.log.WithFields(e.Fields()).Error(e.Error())
+				errObj := &jsonapi.ErrorObject{
+					Status: strconv.Itoa(e.Status()),
+					Title:  e.PublicMessage,
+				}
+				env.jsonAPIErr(w, e.Status(), []*jsonapi.ErrorObject{errObj})
+				return
+			}
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
 // Auth middleware is the middleware wrapper to protect authentication endpoints.
 // This has to be placed after the userMiddleware
 func authMiddleware(env *Env) func(next router.HandlerError) router.HandlerError {

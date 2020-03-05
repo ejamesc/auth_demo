@@ -27,9 +27,9 @@ const app = {
           "Content-Type": "application/vnd.api+json"
         }
       })
-        .then((result) => {
-          console.log(result);
-          update({todos: result});
+        .then((res) => {
+          console.log(res);
+          update({todos: res.data});
         }).catch((e) => {
           console.log(JSON.stringify(e));
         });
