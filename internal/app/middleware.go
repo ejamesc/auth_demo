@@ -287,7 +287,11 @@ func apiErrorHandler(env *Env) router.ErrorHandler {
 			env.jsonAPIErr(w, e.Status(), []*jsonapi.ErrorObject{errObj})
 		default:
 			env.log.Errorf("%+v", e)
-			env.rndr.JSON(w, http.StatusInternalServerError, e)
+			errObj := &jsonapi.ErrorObject{
+				Status: "500",
+				Title:  "Internal Server Error",
+			}
+			env.jsonAPIErr(w, http.StatusInternalServerError, []*jsonapi.ErrorObject{errObj})
 		}
 	}
 }
