@@ -5,8 +5,8 @@ go 1.13
 require (
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
 	github.com/boltdb/bolt v1.3.1
+	github.com/ejamesc/jsonapi v0.0.0-20200306060147-5688dfaf1497
 	github.com/golang/gddo v0.0.0-20200127195332-7365cb292b8b
-	github.com/google/jsonapi v0.0.0-20181016150055-d0428f63eb51
 	github.com/gorilla/csrf v1.6.2
 	github.com/gorilla/sessions v1.2.0
 	github.com/oklog/ulid/v2 v2.0.2

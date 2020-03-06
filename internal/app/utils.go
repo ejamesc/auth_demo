@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/ejamesc/auth_demo/internal/aderrors"
+	"github.com/ejamesc/jsonapi"
 	"github.com/golang/gddo/httputil/header"
-	"github.com/google/jsonapi"
 )
 
 func timeNow() time.Time {
@@ -79,8 +79,27 @@ func isJSONAPIMediaType(r *http.Request) bool {
 	// information in the header.
 	if r.Header.Get("Content-Type") != "" {
 		value, _ := header.ParseValueAndParams(r.Header, "Content-Type")
-		fmt.Println(value)
 		return value == jsonapi.MediaType
 	}
 	return false
+}
+
+func handleCommonAPIErrors(err error) error {
+	switch {
+	case errors.Is(err, aderrors.ErrNoRecords):
+		return aderrors.New404APIError(err)
+	case errors.Is(err, jsonapi.ErrInvalidTime):
+		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+	case errors.Is(err, jsonapi.ErrInvalidISO8601):
+		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+	case errors.Is(err, jsonapi.ErrUnknownFieldNumberType):
+		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+	case errors.Is(err, jsonapi.ErrInvalidType):
+		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+	//case errors.Is(err, jsonapi.ErrInvalidResourceType):
+	//return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+	default:
+		// This will be handled as a 500 error
+		return err
+	}
 }

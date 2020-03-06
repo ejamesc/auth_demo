@@ -5,7 +5,7 @@ import (
 
 	"github.com/ejamesc/auth_demo/internal/models"
 
-	"github.com/google/jsonapi"
+	"github.com/ejamesc/jsonapi"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"github.com/unrolled/render"

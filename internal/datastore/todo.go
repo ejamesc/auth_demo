@@ -7,7 +7,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/ejamesc/auth_demo/internal/aderrors"
 	"github.com/ejamesc/auth_demo/internal/models"
-	"github.com/google/jsonapi"
+	"github.com/ejamesc/jsonapi"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -24,11 +24,10 @@ func (tdstr *TodoStore) Get(id string) (*models.Todo, error) {
 		if tJSON == nil {
 			return aderrors.ErrNoRecords
 		}
-		// TODO: check that this works? Should todo or &todo?
-		return jsonapi.UnmarshalPayload(bytes.NewReader(tJSON), todo)
+		return jsonapi.UnmarshalPayload(bytes.NewReader(tJSON), &todo)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving todo item: %w", err)
+		return nil, err
 	}
 	return &todo, nil
 }
@@ -43,7 +42,7 @@ func (tdstr *TodoStore) Create(td *models.Todo) (bool, error) {
 	}
 
 	td.DateCreated = null.NewTime(timeNow(), true)
-	err := tdstr.View(func(tx *bolt.Tx) error {
+	err := tdstr.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(TodoBucket)
 		if b == nil {
 			return fmt.Errorf("no %s bucket exists", string(TodoBucket))

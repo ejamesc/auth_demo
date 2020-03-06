@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/jsonapi"
+	"github.com/ejamesc/jsonapi"
 
 	"github.com/ejamesc/auth_demo/internal/aderrors"
 	"github.com/ejamesc/auth_demo/internal/models"
@@ -56,11 +56,14 @@ func serveCreateAPITodo(env *Env, tdserv models.TodoService) router.HandlerError
 		if err := jsonapi.UnmarshalPayload(r.Body, todo); err != nil {
 			return aderrors.New500APIError(fmt.Errorf("error unmarshalling jsonapi: %w", err))
 		}
+		env.log.Infof("%+v", todo)
 		_, err := tdserv.Create(todo)
 		if err != nil {
 			return fmt.Errorf("error creating todo: %w", err)
 		}
 		env.loe(env.jsonAPI(w, http.StatusCreated, todo))
+		td2, err := tdserv.Get(todo.ID)
+		env.log.Infof("%+v", td2)
 		return nil
 	}
 }

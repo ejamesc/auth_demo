@@ -11,7 +11,7 @@ import (
 	"github.com/ejamesc/auth_demo/internal/models"
 	"github.com/ejamesc/auth_demo/pkg/router"
 
-	"github.com/google/jsonapi"
+	"github.com/ejamesc/jsonapi"
 	"github.com/gorilla/csrf"
 	"github.com/sirupsen/logrus"
 	"goji.io/middleware"

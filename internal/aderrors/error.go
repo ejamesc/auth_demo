@@ -109,6 +109,18 @@ func New500APIError(err error) APIStatusError {
 	}
 }
 
+func New404APIError(err error) APIStatusError {
+	se := StatusError{Code: http.StatusNotFound, Err: err}
+	pm := "No route found"
+	if errors.Is(err, ErrNoRecords) {
+		pm = "No records found"
+	}
+	return APIStatusError{
+		PublicMessage: pm,
+		StatusError:   se,
+	}
+}
+
 func New401APIError(err error) APIStatusError {
 	return NewAPIError(http.StatusUnauthorized, "Unauthorized", err)
 }
