@@ -1,13 +1,12 @@
 package datastore
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 
 	"github.com/boltdb/bolt"
 	"github.com/ejamesc/auth_demo/internal/aderrors"
 	"github.com/ejamesc/auth_demo/internal/models"
-	"github.com/ejamesc/jsonapi"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -24,7 +23,7 @@ func (tdstr *TodoStore) Get(id string) (*models.Todo, error) {
 		if tJSON == nil {
 			return aderrors.ErrNoRecords
 		}
-		return jsonapi.UnmarshalPayload(bytes.NewReader(tJSON), &todo)
+		return json.Unmarshal(tJSON, &todo)
 	})
 	if err != nil {
 		return nil, err
@@ -47,12 +46,11 @@ func (tdstr *TodoStore) Create(td *models.Todo) (bool, error) {
 		if b == nil {
 			return fmt.Errorf("no %s bucket exists", string(TodoBucket))
 		}
-		var buf bytes.Buffer
-		err := jsonapi.MarshalPayload(&buf, td)
+		tjson, err := json.Marshal(td)
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte(td.ID), buf.Bytes())
+		return b.Put([]byte(td.ID), tjson)
 	})
 	if err != nil {
 		return false, fmt.Errorf("error saving todo item: %w", err)

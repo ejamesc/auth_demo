@@ -21,6 +21,7 @@ func timeNow() time.Time {
 // decodeJSONBody is a helper function for sane defaults when decoding json
 // bodies.
 // See: https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body for more info.
+// Not currently used because of jsonapi
 func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
@@ -88,16 +89,30 @@ func handleCommonAPIErrors(err error) error {
 	switch {
 	case errors.Is(err, aderrors.ErrNoRecords):
 		return aderrors.New404APIError(err)
+	case errors.Is(err, aderrors.ErrAlreadyExists):
+		return aderrors.NewAPIError(http.StatusBadRequest,
+			"An entity with that ID already exists",
+			err)
 	case errors.Is(err, jsonapi.ErrInvalidTime):
-		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+		return aderrors.NewAPIError(http.StatusBadRequest,
+			"Only numbers can be parsed as dates or unix timestamps",
+			err)
 	case errors.Is(err, jsonapi.ErrInvalidISO8601):
-		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+		return aderrors.NewAPIError(http.StatusBadRequest,
+			"Only strings can be parsed as dates or ISO8601 timestamps",
+			err)
 	case errors.Is(err, jsonapi.ErrUnknownFieldNumberType):
-		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+		return aderrors.NewAPIError(http.StatusBadRequest,
+			"Wrong numeric type provided for one of the fields",
+			err)
 	case errors.Is(err, jsonapi.ErrInvalidType):
-		return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
-	//case errors.Is(err, jsonapi.ErrInvalidResourceType):
-	//return aderrors.NewAPIError(http.StatusBadRequest, err.Error(), err)
+		return aderrors.NewAPIError(http.StatusBadRequest,
+			"Wrong type provided for one of the fields",
+			err)
+	case errors.Is(err, jsonapi.ErrInvalidResourceObjectType):
+		return aderrors.NewAPIError(http.StatusBadRequest,
+			"Wrong resource object type provided",
+			err)
 	default:
 		// This will be handled as a 500 error
 		return err

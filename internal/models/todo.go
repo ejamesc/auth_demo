@@ -12,10 +12,10 @@ type TodoService interface {
 }
 
 type Todo struct {
-	ID          string      `jsonapi:"primary,todo"`
-	Name        null.String `jsonapi:"attr,name"`
-	IsDone      null.Bool   `jsonapi:"attr,is_done"`
-	DateCreated null.Time   `jsonapi:"attr,date_created"`
+	ID          string      `json:"id" jsonapi:"primary,todo"`
+	Name        null.String `json:"name" jsonapi:"attr,name"`
+	IsDone      null.Bool   `json:"is_done" jsonapi:"attr,is_done"`
+	DateCreated null.Time   `json:"date_created" jsonapi:"attr,date_created"`
 }
 
 func (t *Todo) GenerateID() {
