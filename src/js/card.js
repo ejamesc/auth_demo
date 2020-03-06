@@ -4,6 +4,9 @@ export const Card = {
   view: (vnode) => {
     var {state, actions} = vnode.attrs;
     return m(".pa4", 
-      m("p.measure-wide", "This is a card component"));
+      [
+        m("p.measure-wide", "This is a card component"),
+        m("button", {onclick: () => actions.postTodo(state)}, "Post a Todo")
+      ]);
   }
 };
