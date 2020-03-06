@@ -8,8 +8,8 @@ github.com/bradfitz/gomemcache v0.0.0-20170208213004-1952afaa557d/go.mod h1:PmM6
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/ejamesc/jsonapi v0.0.0-20200306060147-5688dfaf1497 h1:t4BoOuzGJqjDAOvWuH6qBhrhD66o2kL5Y8kh/NrjVuc=
-github.com/ejamesc/jsonapi v0.0.0-20200306060147-5688dfaf1497/go.mod h1:Tgx3rrNciE+GQxmvvLa9N3XLZLE52pFAVFwYIq3LwxQ=
+github.com/ejamesc/jsonapi v1.0.0 h1:ySMcJMiYfbePT7ocfvwtkQtF7pv0ztHFSUByCwIyBb4=
+github.com/ejamesc/jsonapi v1.0.0/go.mod h1:SlaPJ07WhDFSbPUpkle8/I0qE1Mq0YQLS/92vQmimlQ=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaIu9ajZQe4kcEY9j0NsnDDBZ3o=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
 github.com/fsnotify/fsnotify v1.4.3-0.20170329110642-4da3e2cfbabc/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
